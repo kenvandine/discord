@@ -67,7 +67,7 @@ apps:
     extensions: [gnome]
     command: bin/launcher
     command-chain: [bin/disable-updater]
-    autostart: discord.desktop
+    autostart: discord-stable.desktop
     desktop: usr/share/applications/discord.desktop
     environment:
       # Correct the TMPDIR path for Chromium Framework/Electron to
