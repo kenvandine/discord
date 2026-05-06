@@ -18,7 +18,7 @@ issues: https://github.com//snapcrafters/discord/issues
 source-code: https://github.com//snapcrafters/discord
 license: Proprietary
 icon: snap/discord.png
-version: 1.0.136
+version: 1.0.137
 
 base: core22 # Reverted to core22 as a temporary workaround for https://github.com/snapcrafters/discord/issues/233
 grade: stable
@@ -46,6 +46,9 @@ parts:
     override-build: |
       craftctl default
       sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
+      mkdir -p "${CRAFT_PART_BUILD}/download"
+      "${CRAFT_PART_INSTALL}/usr/share/discord/updater_bootstrap" --no-zenity "${CRAFT_PART_BUILD}/download" stable https://updates.discord.com
+      cp -r "${CRAFT_PART_BUILD}/download/app-$SNAPCRAFT_PROJECT_VERSION"/* "${CRAFT_PART_INSTALL}/usr/share/discord/"
     stage-packages:
       - libatomic1
       - libc++1
@@ -57,7 +60,6 @@ parts:
       - -usr/share/discord/chrome-sandbox
       - -usr/bin/xdg-open
 
-  # Needed for setting the proper desktop file name in the electron apps
   patch-desktop-file-name:
     after: [discord]
     plugin: nil
