@@ -45,10 +45,41 @@ parts:
     source-type: deb
     override-build: |
       craftctl default
+
+      # Fix the .desktop file icon path for the snap.
       sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
+
+      # The upstream .deb doesn't contain the actual Discord app — only a
+      # bootstrapper (updater_bootstrap) that normally downloads Discord into
+      # the user's home directory at runtime. Since snap confinement prevents
+      # that, we run the bootstrapper at build time instead.
+      
       mkdir -p "${CRAFT_PART_BUILD}/download"
       "${CRAFT_PART_INSTALL}/usr/share/discord/updater_bootstrap" --no-zenity "${CRAFT_PART_BUILD}/download" stable https://updates.discord.com
       cp -r "${CRAFT_PART_BUILD}/download/app-$SNAPCRAFT_PROJECT_VERSION"/* "${CRAFT_PART_INSTALL}/usr/share/discord/"
+
+      # The bootstrapper downloads modules into versioned directories
+      # (e.g. modules/discord_desktop_core-1/discord_desktop_core/). At runtime,
+      # Discord would normally install these from bootstrap zip files into a
+      # writable location — but the snap filesystem is read-only.
+      # Setting standaloneModules=true in build_info.json tells Discord to load
+      # modules directly from resources/standalone_modules/ instead. The modules
+      # must be flattened (e.g. standalone_modules/discord_desktop_core/) for
+      # Node's require() to resolve them.
+
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/share/discord/resources/standalone_modules"
+      for module_dir in "${CRAFT_PART_INSTALL}/usr/share/discord/modules"/*/; do
+        module=$(basename "$module_dir")
+        name="${module%-*}"
+        mv "$module_dir/$name" "${CRAFT_PART_INSTALL}/usr/share/discord/resources/standalone_modules/$name"
+      done
+      rm -rf "${CRAFT_PART_INSTALL}/usr/share/discord/modules"
+      jq '.standaloneModules = true' \
+        "${CRAFT_PART_INSTALL}/usr/share/discord/resources/build_info.json" \
+        > /tmp/build_info.json
+      mv /tmp/build_info.json "${CRAFT_PART_INSTALL}/usr/share/discord/resources/build_info.json"
+    build-packages:
+      - jq
     stage-packages:
       - libatomic1
       - libc++1
