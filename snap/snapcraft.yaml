@@ -56,7 +56,7 @@ parts:
       
       mkdir -p "${CRAFT_PART_BUILD}/download"
       "${CRAFT_PART_INSTALL}/usr/share/discord/updater_bootstrap" --no-zenity "${CRAFT_PART_BUILD}/download" stable https://updates.discord.com
-      cp -r "${CRAFT_PART_BUILD}/download/app-$SNAPCRAFT_PROJECT_VERSION"/* "${CRAFT_PART_INSTALL}/usr/share/discord/"
+      cp -r ${CRAFT_PART_BUILD}/download/app-*/* "${CRAFT_PART_INSTALL}/usr/share/discord/"
 
       # The bootstrapper downloads modules into versioned directories
       # (e.g. modules/discord_desktop_core-1/discord_desktop_core/). At runtime,
