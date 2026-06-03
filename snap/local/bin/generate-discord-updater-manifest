@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -30,6 +31,33 @@ UPDATER_MANIFEST_URL = (
     "?channel={channel}&platform=linux&arch=x64"
 )
 USER_AGENT = "snapcrafters-discord-updater-manifest"
+LOOPBACK_NO_PROXY_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def updater_bootstrap_env() -> dict[str, str]:
+    """Return an environment that bypasses proxies for the local manifest."""
+    env = os.environ.copy()
+    existing_hosts = []
+    for name in ("no_proxy", "NO_PROXY"):
+        value = env.get(name)
+        if value:
+            existing_hosts.extend(host.strip() for host in value.split(","))
+
+    merged_hosts = []
+    seen_hosts = set()
+    for host in [*existing_hosts, *LOOPBACK_NO_PROXY_HOSTS]:
+        if not host:
+            continue
+        key = host.lower()
+        if key in seen_hosts:
+            continue
+        seen_hosts.add(key)
+        merged_hosts.append(host)
+
+    no_proxy = ",".join(merged_hosts)
+    env["no_proxy"] = no_proxy
+    env["NO_PROXY"] = no_proxy
+    return env
 
 
 def parse_version(version: str) -> list[int]:
@@ -257,7 +285,9 @@ def bootstrap(
                 channel,
                 repository_url,
             ]
-            result = subprocess.run(command, check=False)
+            result = subprocess.run(
+                command, check=False, env=updater_bootstrap_env()
+            )
         finally:
             server.shutdown()
 
