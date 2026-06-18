@@ -79,6 +79,12 @@ parts:
         mv "$module_dir/$name" "${CRAFT_PART_INSTALL}/usr/share/discord/resources/standalone_modules/$name"
       done
       rm -rf "${CRAFT_PART_INSTALL}/usr/share/discord/modules"
+
+      # Krisp expects this directory to exist relative to the discord_krisp
+      # module. If absent, Krisp global init fails with error code -4:
+      # NoiseCancellerError.KRISP_INIT_ERROR_GLOBAL_INIT.
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/share/discord/resources/standalone_modules/discord_krisp/KMS/logs"
+
       jq '.standaloneModules = true' \
         "${CRAFT_PART_INSTALL}/usr/share/discord/resources/build_info.json" \
         > /tmp/build_info.json
