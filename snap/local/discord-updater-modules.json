@@ -1,6 +1,7 @@
 {
   "channel": "stable",
   "modules": {
+    "discord_arborium": 1,
     "discord_cloudsync": 1,
     "discord_desktop_core": 1,
     "discord_dispatch": 1,
@@ -21,5 +22,5 @@
     "discord_utils",
     "discord_voice"
   ],
-  "version": "1.0.149"
+  "version": "1.0.150"
 }
