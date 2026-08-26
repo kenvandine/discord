@@ -21,4 +21,11 @@ if [[ "${use_x11}" == "true" ]]; then
     opts+=("--ozone-platform=x11")
 fi
 
+# Fix Unity LauncherEntry notification badge: Discord emits
+# "application://discord_discord" without the ".desktop" suffix, so DEs
+# can't match it to the installed snap .desktop file and the badge is dropped.
+# Run the relay in the background; it exits automatically when Discord does
+# because the session bus connection is closed.
+python3 "${SNAP}/bin/unity-launcher-badge-fix" &
+
 exec "${SNAP}/usr/share/discord/Discord" "${opts[@]}" "$@"
