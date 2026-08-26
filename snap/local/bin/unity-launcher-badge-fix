@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+# Fix Unity LauncherEntry notification badge for the Discord snap.
+#
+# Discord emits "application://discord_discord" as the app URI, but the
+# installed snap desktop file is "discord_discord.desktop". Desktop
+# environments match the signal against the .desktop filename, so the badge
+# is silently dropped when the ".desktop" suffix is absent.
+#
+# This script subscribes to com.canonical.Unity.LauncherEntry signals,
+# intercepts any Update sent for "application://discord_discord", and
+# re-emits it with the corrected URI "application://discord_discord.desktop".
+
+import sys
+from gi.repository import GLib, Gio
+
+WRONG_APP_URI = "application://discord_discord"
+CORRECT_APP_URI = "application://discord_discord.desktop"
+
+bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+
+
+def on_update(*args):
+    params = args[5]
+    unpacked = params.unpack()
+    if not unpacked or unpacked[0] != WRONG_APP_URI:
+        return
+
+    (_, props) = unpacked
+    # Re-emit with the corrected app URI so DEs can find the .desktop file.
+    fixed = GLib.Variant("(sa{sv})", (CORRECT_APP_URI, props))
+    bus.emit_signal(
+        None,
+        "/",
+        "com.canonical.Unity.LauncherEntry",
+        "Update",
+        fixed,
+    )
+
+
+bus.signal_subscribe(
+    None,
+    "com.canonical.Unity.LauncherEntry",
+    "Update",
+    None,
+    None,
+    Gio.DBusSignalFlags.NONE,
+    on_update,
+)
+
+GLib.MainLoop().run()

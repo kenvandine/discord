@@ -98,6 +98,7 @@ parts:
       - libnspr4
       - libnss3
       - libxss1
+      - python3-gi
       - xdg-utils
     prime:
       - -usr/share/discord/chrome-sandbox
